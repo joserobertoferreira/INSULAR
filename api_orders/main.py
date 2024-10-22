@@ -2,22 +2,44 @@ from http import HTTPStatus
 
 from auth.auth import Auth
 from config import settings
+from messages.download import DownloadMessages
+from messages.receive import ListQueuedMessages
 
 
-def api_faturas() -> None:
-  # Autentica na API e recupera o token
-  http_status, authentication, token = Auth.login(
-     settings.SERVER_BASE_ADDRESS, 
-     settings.API_USER, 
-     settings.API_PASSWORD,
+def api_orders() -> None:
+    # Autentica na API e recupera o token
+    authentication = Auth.login(
+        settings.SERVER_BASE_ADDRESS,
+        settings.API_USER,
+        settings.API_PASSWORD,
     )
 
-  # Verifica se houve sucesso na autenticação
-  if http_status == HTTPStatus.OK:
-     # Recupera a lista de mensagens
-     ...
+    # Verifica se houve sucesso na autenticação
+    if authentication['HttpStatus'] == HTTPStatus.OK:
+        headers = {
+            'Authorization': 'Bearer ' + authentication['Token'],
+            'Content-type': 'application/json',
+        }
 
-  
+        # Recupera a lista de mensagens
+        messageList = ListQueuedMessages.get_messages(
+            settings.SERVER_BASE_ADDRESS,
+            settings.RECEIVER,
+            headers,
+        )
 
-if __name__ == "__main__":
-    api_faturas()
+        # Se houver mensagens na lista, faz o download
+        if messageList['Errors'] is None:
+            download = DownloadMessages(
+                settings.SERVER_BASE_ADDRESS, headers, messageList['Messages']
+            )
+
+            messages = download.download_messages()
+
+            # Se houve mensagens recuperadas, cria os ficheiros de encomendas
+            if messages is not None:
+                ...
+
+
+if __name__ == '__main__':
+    api_orders()
