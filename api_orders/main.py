@@ -3,6 +3,7 @@ from http import HTTPStatus
 from auth.auth import Auth
 from config import settings
 from messages.download import DownloadMessages
+from messages.process import ProcessMessages
 from messages.receive import ListQueuedMessages
 
 
@@ -29,7 +30,7 @@ def api_orders() -> None:
         )
 
         # Se houver mensagens na lista, faz o download
-        if messageList['Errors'] is None:
+        if messageList['Errors'] == []:
             download = DownloadMessages(
                 settings.SERVER_BASE_ADDRESS, headers, messageList['Messages']
             )
@@ -38,7 +39,11 @@ def api_orders() -> None:
 
             # Se houve mensagens recuperadas, cria os ficheiros de encomendas
             if messages is not None:
-                ...
+                process = ProcessMessages(
+                    settings.SERVER_BASE_ADDRESS, headers
+                )
+
+                process.create_orders_files(messages)
 
 
 if __name__ == '__main__':
