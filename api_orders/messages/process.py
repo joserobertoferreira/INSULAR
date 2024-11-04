@@ -1,15 +1,15 @@
 import base64
 import json
+from pathlib import Path
 
 import requests
 
-from config import settings
-
 
 class ProcessMessages:
-    def __init__(self, base_url, headers) -> None:
+    def __init__(self, base_url, output_folder, headers) -> None:
         self.service_url = f'https://{base_url}/ChangeQueuedToProcessed'
         self.headers = headers
+        self.output_folder = Path(output_folder)
 
     def update_message(self, sender, receiver, message_id) -> None:  # noqa: PLR6301
         payload = {
@@ -20,9 +20,7 @@ class ProcessMessages:
 
         request = json.dumps(payload)
 
-        response = requests.post(
-            self.service_url, headers=self.headers, data=request
-        )
+        response = requests.post(self.service_url, headers=self.headers, data=request)
 
         json_response = json.loads(response.text)  # noqa: F841
 
@@ -41,12 +39,12 @@ class ProcessMessages:
                 # Atualizar a mensagem para processada
                 self.update_message(sender, receiver, message_id)
 
-    def create_text_order_file(self, base64_string, filename) -> None:  # noqa: PLR6301
+    def create_text_order_file(self, base64_string, filename) -> None:
         # Decodificando a string
         decoded_bytes = base64.b64decode(base64_string)
 
         # Salvando em um ficheiro de texto
-        save_filename = settings.FOLDER / filename
+        save_filename = self.output_folder / filename
 
         with open(save_filename, 'wb') as file:
             file.write(decoded_bytes)
