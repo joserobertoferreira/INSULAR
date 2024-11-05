@@ -40,7 +40,10 @@ def api_orders() -> None:
             # Se houve mensagens recuperadas, cria os ficheiros de encomendas
             if messages is not None:
                 process = ProcessMessages(
-                    settings.SERVER_BASE_ADDRESS, settings.FOLDER, headers
+                    settings.SERVER_BASE_ADDRESS,
+                    settings.FOLDER_IN,
+                    settings.FOLDER_OUT,
+                    headers,
                 )
 
                 process.create_orders_files(messages)
