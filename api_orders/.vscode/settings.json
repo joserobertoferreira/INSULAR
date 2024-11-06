@@ -1,3 +1,28 @@
 {
-  "cSpell.words": ["AVALNUM", "CODNUM", "VALEUR"]
+  "cSpell.words": [
+    "AAUID",
+    "AUUID",
+    "AVALNUM",
+    "CODNUM",
+    "CREDAT",
+    "CREDATTIM",
+    "CRETIM",
+    "CREUSR",
+    "FILEIN",
+    "FILEOUT",
+    "GETDATE",
+    "GETUTCDATE",
+    "NUMSEQ",
+    "PATHCOPY",
+    "PATHIN",
+    "PATHOUT",
+    "PRTFLG",
+    "UPDDAT",
+    "UPDDATTIM",
+    "UPDTIM",
+    "UPDUSR",
+    "VALEUR",
+    "ZEDILOG",
+    "ZTYPEDI"
+  ]
 }

@@ -236,6 +236,74 @@ class DatabaseConnection:
                 'data': None,
             }
 
+    def execute_insert(
+        self,
+        table_name: str,
+        values_columns: Dict[str, Any],
+    ) -> Dict[str, str]:
+        """
+        Insere um novo registro em uma tabela específica do banco de dados.
+
+        Parâmetros:
+        - table_name (str): Nome da tabela onde o registro será inserido.
+        - values_columns (dict): Dicionário onde as chaves são as colunas e os valores
+        são os dados a serem inseridos.
+
+        Retorno:
+
+        dict: Um dicionário contendo informações sobre o resultado da operação, como
+        status (sucesso ou erro), mensagem e dados adicionais (se houver).
+
+        Exemplo de uso:
+        insert_into_table("Customers", {"Name": "John", "Age": 30})
+        """
+
+        # Check if there is an active connection
+        if not self.connection:
+            try:
+                self.connect()
+            except pyodbc.Error as e:
+                return {
+                    'status': 'error',
+                    'message': f'No active connection: {e}',
+                    'data': None,
+                }
+
+        # Check if the SET columns and values are provided
+        if not isinstance(values_columns, dict):
+            return {
+                'status': 'error',
+                'message': 'Values must be provided as a dictionary',
+                'data': None,
+            }
+
+        # Build the columns dynamically with placeholders
+        columns = ', '.join(values_columns.keys())
+        placeholders = ', '.join(['?' for _ in values_columns])
+
+        # Build the INSERT query with the columns and placeholders
+        query = f'INSERT INTO {table_name} ({columns}) VALUES ({placeholders})'
+
+        # Extract the values from the dictionary for matching with the placeholders
+        values = list(values_columns.values())
+
+        try:
+            with self.connection.cursor() as cursor:
+                # Execute the query with the values
+                cursor.execute(query, values)
+                self.connection.commit()
+
+                return {
+                    'status': 'success',
+                    'message': 'Insert executed successfully',
+                }
+        except pyodbc.Error as e:
+            return {
+                'status': 'error',
+                'message': f'Error executing query: {e}',
+                'data': None,
+            }
+
     def __enter__(self):
         self.connect()
         return self

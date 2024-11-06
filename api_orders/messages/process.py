@@ -1,5 +1,7 @@
 import base64
 import json
+import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
@@ -45,11 +47,21 @@ class ProcessMessages:
                 self.update_message(sender, receiver, message_id)
 
                 # Copiar o ficheiro gerado para a pasta final com novo nome
-                new_file_name = f'{self.get_new_order_number()}.txt'
+                new_file_name = self.get_new_order_number()
 
                 if new_file_name:
                     handle_files = HandleFiles(self.input_folder, self.output_folder)
-                    handle_files.copy_file(file_to_copy, new_file_name, metadata=False)
+                    handle_files.copy_file(
+                        file_to_copy, f'{new_file_name}.txt', metadata=False
+                    )
+
+                    # Atualizar tabela de log com o novo nome do ficheiro
+                    self.update_log_table(
+                        self.input_folder,
+                        self.output_folder,
+                        file_to_copy,
+                        new_file_name,
+                    )
 
     def create_text_order_file(self, base64_string, filename) -> str:
         # Decodificar a string
@@ -63,6 +75,7 @@ class ProcessMessages:
 
         return save_filename
 
+    @staticmethod
     def get_new_order_number() -> str:
         # Conectar ao banco de dados
         with DatabaseConnection(
@@ -97,3 +110,39 @@ class ProcessMessages:
                     return f'ORD{sequence:07}'
                 else:
                     return ''
+
+    @staticmethod
+    def update_log_table(input_folder, output_folder, file_name, new_file_name) -> bool:
+        with DatabaseConnection(
+            settings.DB_SERVER,
+            settings.DB_DATABASE,
+            settings.DB_USERNAME,
+            settings.DB_PASSWORD,
+        ) as db:
+            current_date = datetime.now()
+            current_utc_time = datetime.now(timezone.utc)
+
+            result = db.execute_insert(
+                table_name=f'{settings.DB_SCHEMA}.ZEDILOG',
+                values_columns={
+                    'ZTYPEDI_0': 4,
+                    'NUMSEQ_0': new_file_name,
+                    'PATHIN_0': input_folder,
+                    'FILEIN_0': file_name,
+                    'PATHOUT_0': output_folder,
+                    'FILEOUT_0': new_file_name,
+                    'PATHCOPY_0': input_folder,
+                    'PRTFLG_0': 0,
+                    'CREDAT_0': current_date.strftime('%Y-%m-%d'),
+                    'CREUSR_0': 'X3WEB',
+                    'CRETIM_0': current_date.strftime('%H:%M:%S'),
+                    'UPDDAT_0': current_date.strftime('%Y-%m-%d'),
+                    'UPDUSR_0': 'X3WEB',
+                    'UPDTIM_0': current_date.strftime('%H:%M:%S'),
+                    'CREDATTIM_0': current_utc_time,
+                    'UPDDATTIM_0': current_utc_time,
+                    'AUUID_0': uuid.uuid4(),
+                },
+            )
+
+            return result['status'] == 'success'
