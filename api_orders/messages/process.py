@@ -51,15 +51,13 @@ class ProcessMessages:
 
                 if new_file_name:
                     handle_files = HandleFiles(self.input_folder, self.output_folder)
-                    handle_files.copy_file(
-                        file_to_copy, f'{new_file_name}.txt', metadata=False
-                    )
+                    handle_files.copy_file(file_to_copy, new_file_name, metadata=False)
 
                     # Atualizar tabela de log com o novo nome do ficheiro
                     self.update_log_table(
                         self.input_folder,
                         self.output_folder,
-                        file_to_copy,
+                        file_name,
                         new_file_name,
                     )
 
@@ -121,17 +119,19 @@ class ProcessMessages:
         ) as db:
             current_date = datetime.now()
             current_utc_time = datetime.now(timezone.utc)
+            input_folder_str = str(input_folder)
+            output_folder_str = str(output_folder)
 
             result = db.execute_insert(
                 table_name=f'{settings.DB_SCHEMA}.ZEDILOG',
                 values_columns={
                     'ZTYPEDI_0': 4,
                     'NUMSEQ_0': new_file_name,
-                    'PATHIN_0': input_folder,
+                    'PATHIN_0': input_folder_str,
                     'FILEIN_0': file_name,
-                    'PATHOUT_0': output_folder,
+                    'PATHOUT_0': output_folder_str,
                     'FILEOUT_0': new_file_name,
-                    'PATHCOPY_0': input_folder,
+                    'PATHCOPY_0': input_folder_str,
                     'PRTFLG_0': 0,
                     'CREDAT_0': current_date.strftime('%Y-%m-%d'),
                     'CREUSR_0': 'X3WEB',
